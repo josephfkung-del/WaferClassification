@@ -1,17 +1,40 @@
 # Wafer Classification
 
-A wafer defect classification project based on the `Wafer_Classification.ipynb` Colab notebook.
+A wafer defect classification web app based on the `Wafer_Classification.ipynb` Colab notebook.
 
-## Project Status
+## What Is In This Repo
 
-This repository is being prepared as a deployable web app. The original notebook came from:
+- `app.py` - Streamlit web app scaffold
+- `requirements.txt` - Python dependencies for local/deployment installs
+- `notebooks/Wafer_Classification.ipynb` - notebook handoff with the original Colab link and export instructions
 
-- `josephfkung-del/DementiaBank-Classifcation/Wafer_Classification.ipynb`
+Original full notebook:
 
-## Planned Web App
+- https://github.com/josephfkung-del/DementiaBank-Classifcation/blob/main/Wafer_Classification.ipynb
 
-The web app will let a user upload or provide a wafer map image/data sample and run classification with a trained model.
+## Run Locally
 
-## Notes
+```bash
+pip install -r requirements.txt
+streamlit run app.py
+```
 
-The notebook currently depends on Google Colab/Drive paths and training data from `archive.zip`, so the deployment version needs the trained model artifact saved separately before live prediction can work.
+## Model Artifact Needed
+
+The current Colab notebook trains the CNN but does not include a deployable model artifact in this repo yet. At the end of the Colab training notebook, run:
+
+```python
+model.save("wafer_classifier.keras")
+```
+
+Then add the saved file as:
+
+```text
+model/wafer_classifier.keras
+```
+
+Once that file exists, `app.py` can be updated to load the model and run real predictions.
+
+## Deployment Target
+
+This is ready for a simple Streamlit deployment once the trained model artifact is added. Good options are Streamlit Community Cloud, Hugging Face Spaces, Render, or Railway.
