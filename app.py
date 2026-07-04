@@ -4,7 +4,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import streamlit as st
-import tensorflow as tf
 from PIL import Image
 
 
@@ -30,7 +29,19 @@ st.set_page_config(page_title="Wafer Classification", page_icon="⚙️", layout
 
 
 @st.cache_resource
+def import_tensorflow():
+    try:
+        import tensorflow as tf
+    except ImportError:
+        return None
+    return tf
+
+
+@st.cache_resource
 def load_model(model_path: str):
+    tf = import_tensorflow()
+    if tf is None:
+        return None
     return tf.keras.models.load_model(model_path)
 
 
@@ -60,6 +71,11 @@ def parse_uploaded_file(uploaded_file):
     raise ValueError("Unsupported file type")
 
 
+def resize_nearest(array, target_size=TARGET_SIZE):
+    image = Image.fromarray(np.asarray(array, dtype="float32")).resize(target_size, Image.Resampling.NEAREST)
+    return np.asarray(image, dtype="float32")
+
+
 def prepare_wafer_map(array):
     array = np.asarray(array, dtype="float32")
 
@@ -69,10 +85,8 @@ def prepare_wafer_map(array):
     if array.ndim != 2:
         raise ValueError("Expected a 2D wafer map array or grayscale image.")
 
-    tensor = tf.convert_to_tensor(array[..., np.newaxis], dtype=tf.float32)
-    tensor = tf.image.resize(tensor, TARGET_SIZE, method="nearest")
-    tensor = tf.expand_dims(tensor, axis=0)
-    return tensor.numpy()
+    resized = resize_nearest(array)
+    return resized[np.newaxis, ..., np.newaxis]
 
 
 def predict(model, wafer_batch):
@@ -85,6 +99,7 @@ st.title("Wafer Defect Classification")
 st.caption("Upload a wafer map as JSON, CSV, PNG, JPG, or JPEG and classify the defect pattern.")
 
 model_path = find_model_path()
+tf = import_tensorflow()
 
 with st.sidebar:
     st.header("Model")
@@ -93,6 +108,11 @@ with st.sidebar:
         st.markdown("Expected `wafer_classifier.keras` or `model/wafer_classifier.keras`.")
     else:
         st.success(f"Model found: `{model_path}`")
+
+    if tf is None:
+        st.info("TensorFlow is not installed in this deployment, so live model inference is disabled.")
+    else:
+        st.success("TensorFlow is available")
 
 uploaded_file = st.file_uploader(
     "Upload a wafer map",
@@ -121,11 +141,19 @@ with right:
         st.empty()
     elif model_path is None:
         st.error("Prediction is disabled until the trained Keras model is in the repo.")
+    elif tf is None:
+        st.warning("The app is running, but TensorFlow is not installed on this deployment.")
+        st.markdown(
+            "To enable live predictions, deploy on a platform with TensorFlow support "
+            "or add `tensorflow-cpu` back to `requirements.txt`."
+        )
     elif wafer_array is None:
         st.empty()
     else:
         try:
             model = load_model(str(model_path))
+            if model is None:
+                raise RuntimeError("TensorFlow is unavailable.")
             wafer_batch = prepare_wafer_map(wafer_array)
             ranked_predictions = predict(model, wafer_batch)
             label, confidence = ranked_predictions[0]
