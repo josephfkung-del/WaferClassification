@@ -1,10 +1,11 @@
 # Wafer Classification
 
-A wafer defect classification web app based on the `Wafer_Classification.ipynb` Colab notebook.
+A Streamlit wafer defect classification web app based on the `Wafer_Classification.ipynb` Colab notebook.
 
 ## What Is In This Repo
 
-- `app.py` - Streamlit web app scaffold
+- `app.py` - Streamlit app that loads the trained Keras model and runs predictions
+- `wafer_classifier.keras` - trained model artifact uploaded from Colab
 - `requirements.txt` - Python dependencies for local/deployment installs
 - `notebooks/Wafer_Classification.ipynb` - notebook handoff with the original Colab link and export instructions
 
@@ -19,22 +20,16 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## Model Artifact Needed
+## Use The App
 
-The current Colab notebook trains the CNN but does not include a deployable model artifact in this repo yet. At the end of the Colab training notebook, run:
+Upload a wafer map as one of these formats:
 
-```python
-model.save("wafer_classifier.keras")
-```
+- JSON nested list
+- CSV numeric matrix
+- PNG/JPG grayscale image
 
-Then add the saved file as:
-
-```text
-model/wafer_classifier.keras
-```
-
-Once that file exists, `app.py` can be updated to load the model and run real predictions.
+The app resizes the input to `64 x 64 x 1`, loads `wafer_classifier.keras`, and shows ranked defect predictions.
 
 ## Deployment Target
 
-This is ready for a simple Streamlit deployment once the trained model artifact is added. Good options are Streamlit Community Cloud, Hugging Face Spaces, Render, or Railway.
+This is ready for a simple Streamlit deployment. Good options are Streamlit Community Cloud, Hugging Face Spaces, Render, or Railway.
